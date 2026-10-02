@@ -1,6 +1,6 @@
 # FocusGoal
 
-A focus app for Android that blocks distracting apps while you work — with **Mira**, a cartoon focus buddy you can chat with.
+A focus app for Android and iPhone that blocks distracting apps while you work — with **Mira**, a cartoon focus buddy you can chat with.
 
 ## What it does
 
@@ -58,5 +58,5 @@ app/src/main/java/com/focusgoal/app/
 ## Notes
 
 - Built with Kotlin + Jetpack Compose. Min Android 8.0 (API 26), targets Android 15.
-- iOS isn't supported: Apple only allows app blocking through the Screen Time API, which needs a separate Swift app and a special entitlement.
+- **iPhone version:** see [`ios/README.md`](ios/README.md). It's a separate SwiftUI app built on Apple's Screen Time APIs, with the same Focus/Deep Focus, Mira and design. It has a few iOS limits, such as no Shorts-only blocking.
 - An app that uses an accessibility service for blocking and stops itself being uninstalled has to explain clearly why it needs those permissions, or Google Play may reject it. This build is meant for personal use and sideloading.

@@ -1,0 +1,33 @@
+name: Build iOS
+
+on:
+  push:
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  pull_request:
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      # Compile-only check: an installable build needs your Apple signing (see ios/README.md).
+      - name: Build for iPhone (no code signing)
+        working-directory: ios
+        run: >
+          xcodebuild -quiet
+          -project FocusGoal.xcodeproj
+          -scheme FocusGoal
+          -destination "generic/platform=iOS"
+          -configuration Debug
+          CODE_SIGNING_ALLOWED=NO
+          build
