@@ -8,6 +8,7 @@ import com.focusgoal.app.data.FocusRepository
 import com.focusgoal.app.focus.BlockPolicy
 import com.focusgoal.app.focus.FocusManager
 import com.focusgoal.app.ui.BlockedActivity
+import com.focusgoal.app.ui.MainActivity
 
 /**
  * Watches which app comes to the foreground. While a session runs, opening a blocked app sends the
@@ -48,6 +49,18 @@ class BlockerAccessibilityService : AccessibilityService() {
                         Intent.FLAG_ACTIVITY_NO_ANIMATION,
                 ),
         )
+    }
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        val repo = FocusRepository.get(this)
+        if (repo.returnAfterAccessibility) {
+            repo.returnAfterAccessibility = false
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            )
+        }
     }
 
     override fun onInterrupt() = Unit

@@ -56,11 +56,15 @@ import com.focusgoal.app.ui.theme.Palette
 import com.focusgoal.app.ui.theme.PillButton
 import com.focusgoal.app.ui.theme.glass
 
-private fun Context.launch(intent: Intent) {
+private fun Context.launch(intent: Intent, fallback: Intent = Permissions.appInfo(this)) {
     try {
         startActivity(intent)
     } catch (e: ActivityNotFoundException) {
-        startActivity(Permissions.appInfo(this))
+        try {
+            startActivity(fallback)
+        } catch (e2: ActivityNotFoundException) {
+            startActivity(Permissions.appInfo(this))
+        }
     }
 }
 
@@ -86,6 +90,22 @@ fun SetupScreen(firstRun: Boolean, onDone: () -> Unit) {
 
     val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { localTick++ }
     var name by remember { mutableStateOf(settings.userName) }
+    var showBlockerGuide by remember { mutableStateOf(false) }
+
+    if (showBlockerGuide) {
+        BlockerGuideDialog(
+            onOpenSettings = {
+                showBlockerGuide = false
+                repo.returnAfterAccessibility = true
+                context.launch(Permissions.accessibilitySettings(context), fallback = Permissions.accessibilityList())
+            },
+            onOpenAppInfo = {
+                showBlockerGuide = false
+                context.launch(Permissions.appInfo(context))
+            },
+            onDismiss = { showBlockerGuide = false },
+        )
+    }
 
     Column(
         Modifier
@@ -132,11 +152,11 @@ fun SetupScreen(firstRun: Boolean, onDone: () -> Unit) {
 
         PermissionCard(
             title = "App blocker",
-            description = "Lets me see which app opens so I can block distractions. Find \"FocusGoal app blocker\" under Installed apps / Downloaded apps and switch it on.",
+            description = "Lets me see which app opens so I can block distractions. Tap Allow and I'll show you exactly what to do.",
             hint = "Greyed out? On Android 13+ open App info → ⋮ menu → \"Allow restricted settings\", then try again.",
             granted = accessibility,
             required = true,
-            onAllow = { context.launch(Permissions.accessibilitySettings()) },
+            onAllow = { showBlockerGuide = true },
             secondaryLabel = "App info",
             onSecondary = { context.launch(Permissions.appInfo(context)) },
         )
@@ -263,5 +283,51 @@ private fun PermissionCard(
                 }
             }
         }
+    }
+}
+
+/** Step-by-step help shown before opening Accessibility settings — that screen confuses everyone. */
+@Composable
+private fun BlockerGuideDialog(onOpenSettings: () -> Unit, onOpenAppInfo: () -> Unit, onDismiss: () -> Unit) {
+    GlassDialog(onDismiss) {
+        Mira(Modifier.size(90.dp), mood = MiraMood.HAPPY)
+        Text("Turn on the app blocker", style = MaterialTheme.typography.titleLarge, color = Palette.Text)
+        Spacer(Modifier.height(14.dp))
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            GuideStep(1, "Tap \"FocusGoal app blocker\". If you don't see it, first tap \"Installed apps\" or \"Downloaded apps\".")
+            GuideStep(2, "Turn the switch ON.")
+            GuideStep(3, "Tap \"Allow\" on the popup.")
+            GuideStep(4, "I'll bring you right back here ✓")
+        }
+        Spacer(Modifier.height(20.dp))
+        PillButton("Open settings", Modifier.fillMaxWidth(), onClick = onOpenSettings)
+        Spacer(Modifier.height(14.dp))
+        Text(
+            "Switch greyed out or says \"Restricted setting\"? Tap below, then ⋮ (top-right) → \"Allow restricted settings\", and come back.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Palette.TextFaint,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Open App info",
+            modifier = Modifier.clip(RoundedCornerShape(50)).clickable(onClick = onOpenAppInfo).padding(horizontal = 14.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelLarge,
+            color = Palette.AccentLight,
+        )
+    }
+}
+
+@Composable
+private fun GuideStep(number: Int, text: String) {
+    Row(verticalAlignment = Alignment.Top) {
+        Box(
+            Modifier.size(26.dp).clip(CircleShape).background(Palette.Accent),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("$number", style = MaterialTheme.typography.labelLarge, color = Color.White)
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(text, style = MaterialTheme.typography.bodyLarge, color = Palette.Text, modifier = Modifier.padding(top = 2.dp))
     }
 }

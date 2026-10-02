@@ -38,7 +38,7 @@ import com.focusgoal.app.ui.theme.glass
 private val DialogShape = RoundedCornerShape(30.dp)
 
 @Composable
-private fun GlassDialog(onDismiss: () -> Unit, content: @Composable () -> Unit) {
+internal fun GlassDialog(onDismiss: () -> Unit, content: @Composable () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Column(
             Modifier

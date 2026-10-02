@@ -59,6 +59,11 @@ class FocusRepository private constructor(context: Context) {
     private val _stats = MutableStateFlow(loadStats())
     val stats: StateFlow<FocusStats> = _stats.asStateFlow()
 
+    /** Set when setup sends the user to Accessibility settings; the service then reopens the app. */
+    var returnAfterAccessibility: Boolean
+        get() = prefs.getBoolean(KEY_RETURN_AFTER_A11Y, false)
+        set(value) = prefs.edit().putBoolean(KEY_RETURN_AFTER_A11Y, value).apply()
+
     /** True once the user has picked apps at least once (so we don't re-apply suggestions). */
     val hasChosenApps: Boolean get() = prefs.contains(KEY_BLOCKED)
 
@@ -199,6 +204,7 @@ class FocusRepository private constructor(context: Context) {
 
     companion object {
         private const val KEY_BLOCKED = "blocked_apps"
+        private const val KEY_RETURN_AFTER_A11Y = "return_after_a11y"
         private const val KEY_S_MODE = "session_mode"
         private const val KEY_S_START = "session_start"
         private const val KEY_S_END = "session_end"

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.text.TextUtils
@@ -45,7 +46,25 @@ object Permissions {
 
     // ---- Intents that open the right settings screen ----
 
-    fun accessibilitySettings() = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+    /**
+     * Android 13+ can open FocusGoal's own switch directly. Older versions open the Accessibility
+     * list, and many phones scroll to and highlight our entry thanks to the fragment-args extras.
+     */
+    fun accessibilitySettings(context: Context): Intent {
+        val component = ComponentName(context, BlockerAccessibilityService::class.java).flattenToString()
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Intent(Settings.ACTION_ACCESSIBILITY_DETAILS_SETTINGS).putExtra(Intent.EXTRA_COMPONENT_NAME, component)
+        } else {
+            accessibilityList(component)
+        }
+    }
+
+    fun accessibilityList(component: String? = null) = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+        if (component != null) {
+            putExtra(":settings:fragment_args_key", component)
+            putExtra(":settings:show_fragment_args", Bundle().apply { putString(":settings:fragment_args_key", component) })
+        }
+    }
 
     fun appInfo(context: Context) =
         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))
