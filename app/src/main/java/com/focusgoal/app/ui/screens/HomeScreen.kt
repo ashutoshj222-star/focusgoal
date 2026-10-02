@@ -39,9 +39,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.focusgoal.app.ai.MiraChat
 import com.focusgoal.app.ai.MiraLines
@@ -166,9 +166,13 @@ private fun IdleContent(onOpenApps: () -> Unit, onOpenChat: () -> Unit, onOpenSe
             horizontalArrangement = Arrangement.Center,
         ) {
             RoundGlassButton("−") { minutes = (minutes - 5).coerceAtLeast(5) }
-            TimerRing(progress = (minutes / 120f).coerceIn(0.04f, 1f), modifier = Modifier.padding(horizontal = 16.dp).size(190.dp)) {
+            TimerRing(progress = (minutes / 120f).coerceIn(0.04f, 1f), modifier = Modifier.padding(horizontal = 10.dp).size(170.dp)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(formatCountdown(minutes * 60_000L), style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Light), color = Palette.Text)
+                    Text(
+                        formatCountdown(minutes * 60_000L),
+                        style = MaterialTheme.typography.displayLarge.copy(fontSize = if (minutes >= 60) 34.sp else 44.sp),
+                        color = Palette.Text,
+                    )
                     Text("minutes", style = MaterialTheme.typography.labelMedium, color = Palette.TextFaint)
                 }
             }
@@ -301,9 +305,13 @@ private fun ActiveSessionContent(session: FocusSession, now: Long, onOpenChat: (
     }
 
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        TimerRing(progress = progress, modifier = Modifier.size(270.dp), stroke = 16.dp) {
+        TimerRing(progress = progress, modifier = Modifier.size(260.dp), stroke = 16.dp) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(formatCountdown(remaining), style = MaterialTheme.typography.displayLarge, color = Palette.Text)
+                Text(
+                    formatCountdown(remaining),
+                    style = MaterialTheme.typography.displayLarge.copy(fontSize = if (remaining >= 3_600_000L) 44.sp else 56.sp),
+                    color = Palette.Text,
+                )
                 Text("ends at ${formatClock(session.endAt)}", style = MaterialTheme.typography.bodyMedium, color = Palette.TextDim)
             }
         }
