@@ -31,7 +31,7 @@ class MiraChat private constructor(private val appContext: Context) {
     private val _bubble = MutableStateFlow<String?>(null)
     val bubble: StateFlow<String?> = _bubble.asStateFlow()
 
-    private var brain: Pair<String, ClaudeBrain>? = null
+    private var brain: Pair<String, MiraBrain>? = null
 
     @Synchronized
     private fun add(fromUser: Boolean, text: String) {
@@ -62,7 +62,9 @@ class MiraChat private constructor(private val appContext: Context) {
             } else {
                 withContext(Dispatchers.IO) {
                     runCatching {
-                        brainFor(settings.apiKey).reply(
+                        val brain = brainFor(settings.apiKey, settings.aiModel)
+                            ?: return@withContext "I don't recognise that API key 🤔 Use a Claude (sk-ant-…), ChatGPT (sk-…) or Gemini (AIza…) key in Settings."
+                        brain.reply(
                             history = _messages.value.map { ChatTurn(it.fromUser, it.text) },
                             context = describeContext(),
                         )
@@ -78,9 +80,11 @@ class MiraChat private constructor(private val appContext: Context) {
         }
     }
 
-    private fun brainFor(apiKey: String): ClaudeBrain {
-        brain?.let { (key, b) -> if (key == apiKey) return b else b.close() }
-        return ClaudeBrain(apiKey).also { brain = apiKey to it }
+    private fun brainFor(apiKey: String, model: String): MiraBrain? {
+        val cacheKey = "$apiKey|$model"
+        brain?.let { (key, b) -> if (key == cacheKey) return b else b.close() }
+        brain = null
+        return AiProvider.create(apiKey, model)?.also { brain = cacheKey to it }
     }
 
     private fun describeContext(): String {

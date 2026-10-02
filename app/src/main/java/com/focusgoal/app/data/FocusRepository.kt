@@ -25,6 +25,8 @@ data class FocusSession(
 data class FocusSettings(
     val userName: String = "",
     val apiKey: String = "",
+    /** Optional model name; blank means the provider's default. */
+    val aiModel: String = "",
     val lockWholePhoneByDefault: Boolean = false,
     val onboardingDone: Boolean = false,
     val lastDurationMinutes: Int = 25,
@@ -136,6 +138,7 @@ class FocusRepository private constructor(context: Context) {
         prefs.edit()
             .putString(KEY_NAME, s.userName)
             .putString(KEY_API_KEY, s.apiKey)
+            .putString(KEY_AI_MODEL, s.aiModel)
             .putBoolean(KEY_LOCK_ALL_DEFAULT, s.lockWholePhoneByDefault)
             .putBoolean(KEY_ONBOARDING, s.onboardingDone)
             .putInt(KEY_LAST_DURATION, s.lastDurationMinutes)
@@ -146,6 +149,7 @@ class FocusRepository private constructor(context: Context) {
     private fun loadSettings() = FocusSettings(
         userName = prefs.getString(KEY_NAME, "") ?: "",
         apiKey = prefs.getString(KEY_API_KEY, "") ?: "",
+        aiModel = prefs.getString(KEY_AI_MODEL, "") ?: "",
         lockWholePhoneByDefault = prefs.getBoolean(KEY_LOCK_ALL_DEFAULT, false),
         onboardingDone = prefs.getBoolean(KEY_ONBOARDING, false),
         lastDurationMinutes = prefs.getInt(KEY_LAST_DURATION, 25),
@@ -212,6 +216,7 @@ class FocusRepository private constructor(context: Context) {
         private const val KEY_S_LOCK_ALL = "session_lock_all"
         private const val KEY_NAME = "user_name"
         private const val KEY_API_KEY = "anthropic_api_key"
+        private const val KEY_AI_MODEL = "ai_model"
         private const val KEY_LOCK_ALL_DEFAULT = "lock_all_default"
         private const val KEY_ONBOARDING = "onboarding_done"
         private const val KEY_LAST_DURATION = "last_duration"

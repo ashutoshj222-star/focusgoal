@@ -93,7 +93,7 @@ object MiraLines {
             listOf("thank", "love", "cute").any { it in m } -> "Aww 🥰 I'm always here for you!"
             listOf("deep focus", "deep").any { it in m } ->
                 "Deep Focus locks your chosen apps and can't be stopped or uninstalled until the timer ends. Super strict, super effective!"
-            "?" in m -> "Good question! Add your Claude API key in Settings and I can answer anything. For now: focus first, then we figure it out together 😉"
+            "?" in m -> "Good question! Add a Claude, ChatGPT or Gemini API key in Settings and I can answer anything. For now: focus first, then we figure it out together 😉"
             else -> listOf(
                 "Got it! Want to turn that into a focus session?",
                 "I hear you. One step at a time 💜",

@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.focusgoal.app.ai.AiProvider
 import com.focusgoal.app.ai.ChatMessage
 import com.focusgoal.app.ai.MiraChat
 import com.focusgoal.app.ai.MiraLines
@@ -115,7 +116,8 @@ fun ChatScreen() {
                     when {
                         typing -> "typing…"
                         settings.apiKey.isBlank() -> "your focus buddy · offline mode"
-                        else -> "your focus buddy · AI on ✨"
+                        else -> "your focus buddy · " +
+                            (AiProvider.detect(settings.apiKey)?.label?.substringBefore(" (")?.let { "$it on ✨" } ?: "check your API key")
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = Palette.TextDim,

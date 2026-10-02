@@ -36,7 +36,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.focusgoal.app.ai.ClaudeBrain
+import com.focusgoal.app.ai.AiProvider
 import com.focusgoal.app.data.FocusRepository
 import com.focusgoal.app.focus.Permissions
 import com.focusgoal.app.ui.rememberResumeTick
@@ -58,6 +58,7 @@ fun SettingsScreen(onOpenSetup: () -> Unit) {
     var name by remember { mutableStateOf(settings.userName) }
     var apiKey by remember { mutableStateOf(settings.apiKey) }
     var showKey by remember { mutableStateOf(false) }
+    var model by remember { mutableStateOf(settings.aiModel) }
 
     Column(
         Modifier
@@ -92,21 +93,42 @@ fun SettingsScreen(onOpenSetup: () -> Unit) {
             SectionLabel("Mira's AI brain")
             Spacer(Modifier.height(6.dp))
             Text(
-                "Paste an Anthropic API key (console.anthropic.com) to let Mira chat about anything using Claude (${ClaudeBrain.MODEL}). " +
-                    "Without one she uses built-in replies. The key is stored only on this phone and API usage is billed to your account.",
+                "Paste an API key from Claude (console.anthropic.com), ChatGPT (platform.openai.com) or Gemini " +
+                    "(aistudio.google.com) and Mira can chat about anything. Without one she uses built-in replies. " +
+                    "The key stays on this phone; API usage is billed by that company.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Palette.TextDim,
             )
             Spacer(Modifier.height(10.dp))
             GlassField(
                 value = apiKey,
-                placeholder = "sk-ant-…",
+                placeholder = "sk-ant-…  /  sk-…  /  AIza…",
                 password = !showKey,
                 onChange = {
                     apiKey = it.trim()
                     repo.updateSettings { s -> s.copy(apiKey = apiKey) }
                 },
             )
+            val provider = AiProvider.detect(apiKey)
+            if (apiKey.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    provider?.let { "✓ ${it.label} key detected" } ?: "Unknown key. It should start with sk-ant-, sk- or AIza",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (provider != null) Color(0xFF4ADE80) else Palette.Danger,
+                )
+            }
+            if (provider != null) {
+                Spacer(Modifier.height(10.dp))
+                GlassField(
+                    value = model,
+                    placeholder = "Model (default: ${provider.defaultModel})",
+                    onChange = {
+                        model = it.trim()
+                        repo.updateSettings { s -> s.copy(aiModel = model) }
+                    },
+                )
+            }
             Spacer(Modifier.height(8.dp))
             Text(
                 if (showKey) "Hide key" else "Show key",
