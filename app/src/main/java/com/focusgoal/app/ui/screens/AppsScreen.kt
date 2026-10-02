@@ -62,6 +62,7 @@ fun AppsScreen() {
     val session by repo.session.collectAsStateWithLifecycle()
     val deepActive = session?.let { it.mode == FocusMode.DEEP && it.isRunning() } == true
     var query by rememberSaveable { mutableStateOf("") }
+    var featuresTab by rememberSaveable { mutableStateOf(false) }
 
     val apps by produceState<List<AppEntry>?>(null) {
         val loaded = withContext(Dispatchers.IO) { InstalledApps.load(context) }
@@ -75,13 +76,52 @@ fun AppsScreen() {
 
     Column(Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 20.dp)) {
         Spacer(Modifier.height(12.dp))
-        Text("Apps to block", style = MaterialTheme.typography.headlineMedium, color = Palette.Text)
+        Text("What to block", style = MaterialTheme.typography.headlineMedium, color = Palette.Text)
+        Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth().glass(RoundedCornerShape(50)).padding(4.dp)) {
+            SegmentButton("Whole apps", selected = !featuresTab, modifier = Modifier.weight(1f)) { featuresTab = false }
+            SegmentButton("Shorts & Reels", selected = featuresTab, modifier = Modifier.weight(1f)) { featuresTab = true }
+        }
+        Spacer(Modifier.height(12.dp))
+
+        if (featuresTab) {
+            FeatureBlocksList(deepActive)
+        } else {
+            WholeAppsContent(apps, query, { query = it }, blocked, deepActive) { pkg, on -> repo.setAppBlocked(pkg, on) }
+        }
+    }
+}
+
+@Composable
+private fun SegmentButton(text: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(
+        modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (selected) Palette.Accent.copy(alpha = 0.6f) else Color.Transparent)
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, style = MaterialTheme.typography.labelLarge, color = if (selected) Color.White else Palette.TextDim)
+    }
+}
+
+@Composable
+private fun WholeAppsContent(
+    apps: List<AppEntry>?,
+    query: String,
+    onQuery: (String) -> Unit,
+    blocked: Set<String>,
+    deepActive: Boolean,
+    onToggle: (String, Boolean) -> Unit,
+) {
+    Column {
         Text(
-            "These are locked while a focus session runs.",
+            "These apps are locked completely while a focus session runs.",
             style = MaterialTheme.typography.bodyMedium,
             color = Palette.TextDim,
         )
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(12.dp))
 
         Row(
             Modifier.fillMaxWidth().glass(RoundedCornerShape(50)).padding(horizontal = 16.dp, vertical = 12.dp),
@@ -93,7 +133,7 @@ fun AppsScreen() {
                 if (query.isEmpty()) Text("Search apps", color = Palette.TextFaint, style = MaterialTheme.typography.bodyLarge)
                 BasicTextField(
                     value = query,
-                    onValueChange = { query = it },
+                    onValueChange = onQuery,
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = Palette.Text),
                     cursorBrush = SolidColor(Palette.AccentLight),
@@ -124,7 +164,7 @@ fun AppsScreen() {
                 CircularProgressIndicator(color = Palette.Accent)
             }
         } else {
-            AppList(list, query, blocked, deepActive) { pkg, on -> repo.setAppBlocked(pkg, on) }
+            AppList(list, query, blocked, deepActive, onToggle)
         }
     }
 }

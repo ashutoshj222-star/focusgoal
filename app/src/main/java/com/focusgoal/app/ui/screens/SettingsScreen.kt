@@ -93,8 +93,8 @@ fun SettingsScreen(onOpenSetup: () -> Unit) {
             SectionLabel("Mira's AI brain")
             Spacer(Modifier.height(6.dp))
             Text(
-                "Paste an API key from Claude (console.anthropic.com), ChatGPT (platform.openai.com) or Gemini " +
-                    "(aistudio.google.com) and Mira can chat about anything. Without one she uses built-in replies. " +
+                "Paste an API key from Claude, ChatGPT (OpenAI), Gemini, Groq or OpenRouter (one key for almost any " +
+                    "AI model) and Mira can chat about anything. Without one she uses built-in replies. " +
                     "The key stays on this phone; API usage is billed by that company.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Palette.TextDim,
@@ -113,7 +113,7 @@ fun SettingsScreen(onOpenSetup: () -> Unit) {
             if (apiKey.isNotBlank()) {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    provider?.let { "✓ ${it.label} key detected" } ?: "Unknown key. It should start with sk-ant-, sk- or AIza",
+                    provider?.let { "✓ ${it.label} key detected" } ?: "Unknown key. Supported: sk-ant- (Claude), sk- (OpenAI), AIza (Gemini), gsk_ (Groq), sk-or- (OpenRouter)",
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (provider != null) Color(0xFF4ADE80) else Palette.Danger,
                 )
@@ -171,7 +171,7 @@ fun SettingsScreen(onOpenSetup: () -> Unit) {
         }
 
         Text(
-            "FocusGoal 1.0 · Mira only sees what you type to her. The app blocker reads app names, never screen content.",
+            "FocusGoal 1.0 · Mira only sees what you type to her. The blocker only looks at the screen of apps where you block Shorts/Reels, and nothing is saved or sent.",
             style = MaterialTheme.typography.bodyMedium,
             color = Palette.TextFaint,
             modifier = Modifier.padding(horizontal = 4.dp),

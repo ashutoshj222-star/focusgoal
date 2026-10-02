@@ -25,6 +25,8 @@ enum class AiProvider(val label: String, val defaultModel: String) {
     CLAUDE("Claude (Anthropic)", ClaudeBrain.MODEL),
     OPENAI("ChatGPT (OpenAI)", "gpt-5-mini"),
     GEMINI("Gemini (Google)", "gemini-flash-latest"),
+    GROQ("Groq", "llama-3.1-8b-instant"),
+    OPENROUTER("OpenRouter (any model)", "openrouter/auto"),
     ;
 
     companion object {
@@ -33,6 +35,8 @@ enum class AiProvider(val label: String, val defaultModel: String) {
             return when {
                 key.isEmpty() -> null
                 key.startsWith("sk-ant-") -> CLAUDE
+                key.startsWith("sk-or-") -> OPENROUTER
+                key.startsWith("gsk_") -> GROQ
                 key.startsWith("AIza") -> GEMINI
                 key.startsWith("sk-") -> OPENAI
                 else -> null
@@ -44,7 +48,9 @@ enum class AiProvider(val label: String, val defaultModel: String) {
             val m = model.trim().ifEmpty { provider.defaultModel }
             return when (provider) {
                 CLAUDE -> ClaudeBrain(apiKey.trim(), m)
-                OPENAI -> OpenAiBrain(apiKey.trim(), m)
+                OPENAI -> OpenAiBrain(apiKey.trim(), m, "https://api.openai.com/v1")
+                GROQ -> OpenAiBrain(apiKey.trim(), m, "https://api.groq.com/openai/v1")
+                OPENROUTER -> OpenAiBrain(apiKey.trim(), m, "https://openrouter.ai/api/v1")
                 GEMINI -> GeminiBrain(apiKey.trim(), m)
             }
         }
@@ -117,15 +123,15 @@ internal fun postJson(url: String, headers: Map<String, String>, body: JSONObjec
     }
 }
 
-/** ChatGPT via OpenAI's Chat Completions API. */
-class OpenAiBrain(private val apiKey: String, private val model: String) : MiraBrain {
+/** ChatGPT, or any service that speaks OpenAI's Chat Completions format (Groq, OpenRouter). */
+class OpenAiBrain(private val apiKey: String, private val model: String, private val baseUrl: String) : MiraBrain {
     override fun reply(history: List<ChatTurn>, context: String): String? {
         val messages = JSONArray().put(JSONObject().put("role", "system").put("content", MiraPersona.SYSTEM_PROMPT))
         MiraPersona.prepare(history, context).forEach { turn ->
             messages.put(JSONObject().put("role", if (turn.fromUser) "user" else "assistant").put("content", turn.text))
         }
         val response = postJson(
-            "https://api.openai.com/v1/chat/completions",
+            "$baseUrl/chat/completions",
             mapOf("Authorization" to "Bearer $apiKey"),
             JSONObject().put("model", model).put("messages", messages),
         )

@@ -63,7 +63,7 @@ class MiraChat private constructor(private val appContext: Context) {
                 withContext(Dispatchers.IO) {
                     runCatching {
                         val brain = brainFor(settings.apiKey, settings.aiModel)
-                            ?: return@withContext "I don't recognise that API key 🤔 Use a Claude (sk-ant-…), ChatGPT (sk-…) or Gemini (AIza…) key in Settings."
+                            ?: return@withContext "I don't recognise that API key 🤔 Use a Claude, ChatGPT, Gemini, Groq or OpenRouter key in Settings."
                         brain.reply(
                             history = _messages.value.map { ChatTurn(it.fromUser, it.text) },
                             context = describeContext(),

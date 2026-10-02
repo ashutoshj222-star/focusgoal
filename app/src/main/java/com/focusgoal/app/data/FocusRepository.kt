@@ -28,6 +28,8 @@ data class FocusSettings(
     /** Optional model name; blank means the provider's default. */
     val aiModel: String = "",
     val lockWholePhoneByDefault: Boolean = false,
+    /** Shorts/Reels blocks apply only while a session runs (otherwise they're always on). */
+    val featuresOnlyDuringFocus: Boolean = false,
     val onboardingDone: Boolean = false,
     val lastDurationMinutes: Int = 25,
 )
@@ -54,6 +56,11 @@ class FocusRepository private constructor(context: Context) {
 
     private val _blockedApps = MutableStateFlow(prefs.getStringSet(KEY_BLOCKED, null)?.toSet() ?: emptySet())
     val blockedApps: StateFlow<Set<String>> = _blockedApps.asStateFlow()
+
+    private val _blockedFeatures = MutableStateFlow(prefs.getStringSet(KEY_BLOCKED_FEATURES, null)?.toSet() ?: emptySet())
+
+    /** IDs from FeatureRules (e.g. "youtube_shorts") the user wants blocked. */
+    val blockedFeatures: StateFlow<Set<String>> = _blockedFeatures.asStateFlow()
 
     private val _settings = MutableStateFlow(loadSettings())
     val settings: StateFlow<FocusSettings> = _settings.asStateFlow()
@@ -126,6 +133,22 @@ class FocusRepository private constructor(context: Context) {
         return true
     }
 
+    /** Returns false when turning a feature block off isn't allowed (during Deep Focus). */
+    fun setFeatureBlocked(featureId: String, blocked: Boolean): Boolean {
+        if (!blocked && activeSession()?.mode == FocusMode.DEEP) return false
+        val updated = if (blocked) _blockedFeatures.value + featureId else _blockedFeatures.value - featureId
+        prefs.edit().putStringSet(KEY_BLOCKED_FEATURES, updated).apply()
+        _blockedFeatures.value = updated
+        return true
+    }
+
+    /** Feature blocks that should be enforced right now. */
+    fun activeFeatureBlocks(): Set<String> {
+        val ids = _blockedFeatures.value
+        if (ids.isEmpty()) return ids
+        return if (_settings.value.featuresOnlyDuringFocus && activeSession() == null) emptySet() else ids
+    }
+
     fun setBlockedApps(packages: Set<String>) {
         prefs.edit().putStringSet(KEY_BLOCKED, packages).apply()
         _blockedApps.value = packages
@@ -140,6 +163,7 @@ class FocusRepository private constructor(context: Context) {
             .putString(KEY_API_KEY, s.apiKey)
             .putString(KEY_AI_MODEL, s.aiModel)
             .putBoolean(KEY_LOCK_ALL_DEFAULT, s.lockWholePhoneByDefault)
+            .putBoolean(KEY_FEATURES_ONLY_FOCUS, s.featuresOnlyDuringFocus)
             .putBoolean(KEY_ONBOARDING, s.onboardingDone)
             .putInt(KEY_LAST_DURATION, s.lastDurationMinutes)
             .apply()
@@ -151,6 +175,7 @@ class FocusRepository private constructor(context: Context) {
         apiKey = prefs.getString(KEY_API_KEY, "") ?: "",
         aiModel = prefs.getString(KEY_AI_MODEL, "") ?: "",
         lockWholePhoneByDefault = prefs.getBoolean(KEY_LOCK_ALL_DEFAULT, false),
+        featuresOnlyDuringFocus = prefs.getBoolean(KEY_FEATURES_ONLY_FOCUS, false),
         onboardingDone = prefs.getBoolean(KEY_ONBOARDING, false),
         lastDurationMinutes = prefs.getInt(KEY_LAST_DURATION, 25),
     )
@@ -208,6 +233,8 @@ class FocusRepository private constructor(context: Context) {
 
     companion object {
         private const val KEY_BLOCKED = "blocked_apps"
+        private const val KEY_BLOCKED_FEATURES = "blocked_features"
+        private const val KEY_FEATURES_ONLY_FOCUS = "features_only_focus"
         private const val KEY_RETURN_AFTER_A11Y = "return_after_a11y"
         private const val KEY_S_MODE = "session_mode"
         private const val KEY_S_START = "session_start"
