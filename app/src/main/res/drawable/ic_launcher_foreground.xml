@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Soft glass ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#40FFFFFF"
+        android:strokeWidth="5"
+        android:pathData="M54,30A24,24 0,1 1,30 54,24 24,0 0,1 54,30Z" />
+    <!-- Progress arc -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#B9AEFF"
+        android:strokeLineCap="round"
+        android:strokeWidth="5"
+        android:pathData="M54,30A24,24 0,0 1,78 54" />
+    <!-- Center dot -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,47A7,7 0,1 1,47 54,7 7,0 0,1 54,47Z" />
+</vector>
