@@ -8,8 +8,8 @@ import androidx.activity.addCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,22 +32,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.focusgoal.app.R
 import com.focusgoal.app.ai.MiraLines
 import com.focusgoal.app.data.FocusMode
 import com.focusgoal.app.data.FocusRepository
 import com.focusgoal.app.data.InstalledApps
-import com.focusgoal.app.ui.character.Mira
-import com.focusgoal.app.ui.character.MiraMood
-import com.focusgoal.app.ui.character.SpeechBubble
 import com.focusgoal.app.ui.theme.FocusTheme
 import com.focusgoal.app.ui.theme.GlowBackground
 import com.focusgoal.app.ui.theme.Palette
 import com.focusgoal.app.ui.theme.PillButton
-import kotlinx.coroutines.delay
 
-/** Mira's "not now!" screen, shown when a blocked app is opened during a session. */
+/** Covers a blocked app during a session: FocusGoal logo, the live timer and a "Stay focused" button. */
 class BlockedActivity : ComponentActivity() {
 
     private var blockedPackage by mutableStateOf<String?>(null)
@@ -108,53 +107,69 @@ private fun BlockedScreen(
     LaunchedEffect(session == null) { if (session == null) onSessionOver() }
 
     val label = remember(packageName) { packageName?.let { InstalledApps.label(context, it) } ?: "This app" }
-    val icon = remember(packageName) { packageName?.let { InstalledApps.icon(context, it) } }
     val deep = session?.mode == FocusMode.DEEP
     val line = remember(packageName) { MiraLines.blocked(label, deep) }
-    var talking by remember { mutableStateOf(true) }
-    LaunchedEffect(line) {
-        talking = true
-        delay(1800)
-        talking = false
-    }
 
     GlowBackground {
         Column(
-            Modifier.fillMaxSize().systemBarsPadding().padding(24.dp),
+            Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 24.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
         ) {
-            Mira(Modifier.size(200.dp), mood = MiraMood.STERN, talking = talking)
-            SpeechBubble(line, Modifier.fillMaxWidth())
-            Spacer(Modifier.height(28.dp))
-
+            // ---- Our logo + name (the blocked app's content stays hidden underneath) ----
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (icon != null) {
-                    Image(icon, contentDescription = null, modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)))
-                    Spacer(Modifier.width(10.dp))
-                }
-                Text("$label is blocked", style = MaterialTheme.typography.titleLarge, color = Palette.Text)
+                Image(
+                    painterResource(R.drawable.ic_launcher_foreground),
+                    contentDescription = null,
+                    modifier = Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(Palette.BgBottom),
+                )
+                Spacer(Modifier.width(10.dp))
+                Text("FocusGoal", style = MaterialTheme.typography.titleLarge, color = Palette.Text)
             }
-            Spacer(Modifier.height(8.dp))
+
+            Spacer(Modifier.weight(1f))
+
+            Text(
+                if (deep) "DEEP FOCUS · LOCKED 🔒" else "FOCUS MODE",
+                style = MaterialTheme.typography.labelMedium,
+                color = Palette.AccentLight,
+            )
+            Spacer(Modifier.height(16.dp))
+
             if (session != null) {
-                Text(
-                    "Unlocks in ${formatCountdown(session.remainingMs(now))}",
-                    style = MaterialTheme.typography.displayLarge.copy(fontSize = MaterialTheme.typography.headlineMedium.fontSize),
-                    color = Palette.AccentLight,
-                )
-                Text(
-                    if (deep) "Deep Focus is on — no shortcuts today 🔒" else "You can do this. Back to your task!",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Palette.TextDim,
-                    textAlign = TextAlign.Center,
-                )
+                val remaining = session.remainingMs(now)
+                TimerRing(
+                    progress = remaining.toFloat() / session.durationMs.coerceAtLeast(1),
+                    modifier = Modifier.size(260.dp),
+                    stroke = 16.dp,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            formatCountdown(remaining),
+                            style = MaterialTheme.typography.displayLarge.copy(fontSize = if (remaining >= 3_600_000L) 44.sp else 56.sp),
+                            color = Palette.Text,
+                        )
+                        Text("ends at ${formatClock(session.endAt)}", style = MaterialTheme.typography.bodyMedium, color = Palette.TextDim)
+                    }
+                }
             }
-            Spacer(Modifier.height(32.dp))
-            PillButton("Back to work 💪", Modifier.fillMaxWidth(), onClick = onBackToWork)
-            Spacer(Modifier.height(12.dp))
+
+            Spacer(Modifier.height(24.dp))
+            Text(
+                "$label is blocked right now",
+                style = MaterialTheme.typography.titleMedium,
+                color = Palette.Text,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(line, style = MaterialTheme.typography.bodyMedium, color = Palette.TextDim, textAlign = TextAlign.Center)
+
+            Spacer(Modifier.weight(1f))
+
+            PillButton("Stay focused 💪", Modifier.fillMaxWidth(), onClick = onBackToWork)
+            Spacer(Modifier.height(8.dp))
             Text(
                 "Open FocusGoal",
-                modifier = Modifier.clickable(onClick = onOpenApp).padding(8.dp),
+                modifier = Modifier.clickable(onClick = onOpenApp).padding(10.dp),
                 style = MaterialTheme.typography.labelLarge,
                 color = Palette.TextDim,
             )

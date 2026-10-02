@@ -14,7 +14,7 @@ import com.focusgoal.app.ui.MainActivity
 
 /**
  * Two jobs:
- *  1. During a session, opening a blocked app sends the user home and shows Mira's "not now" screen.
+ *  1. During a session, opening a blocked app covers it with the focus timer screen.
  *  2. Feature blocks (YouTube Shorts, Instagram Reels…): when that screen appears, press Back so the
  *     rest of the app stays usable.
  * Screen content is only inspected in apps that have a feature block switched on, and nothing is stored.
@@ -57,7 +57,7 @@ class BlockerAccessibilityService : AccessibilityService() {
         lastBlockedPkg = pkg
         lastBlockedAt = now
 
-        performGlobalAction(GLOBAL_ACTION_HOME)
+        // Cover the blocked app with the focus timer screen (it stays hidden underneath).
         startActivity(
             Intent(this, BlockedActivity::class.java)
                 .putExtra(BlockedActivity.EXTRA_PACKAGE, pkg)
