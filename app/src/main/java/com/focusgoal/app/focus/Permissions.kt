@@ -53,7 +53,8 @@ object Permissions {
     fun accessibilitySettings(context: Context): Intent {
         val component = ComponentName(context, BlockerAccessibilityService::class.java).flattenToString()
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Intent(Settings.ACTION_ACCESSIBILITY_DETAILS_SETTINGS).putExtra(Intent.EXTRA_COMPONENT_NAME, component)
+            // Settings.ACTION_ACCESSIBILITY_DETAILS_SETTINGS isn't in the public SDK, but Settings handles it.
+            Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS").putExtra(Intent.EXTRA_COMPONENT_NAME, component)
         } else {
             accessibilityList(component)
         }
