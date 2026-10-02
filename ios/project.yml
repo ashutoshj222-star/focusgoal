@@ -30,6 +30,7 @@ targets:
         CFBundleDisplayName: FocusGoal
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIRequiresFullScreen: true
         UIUserInterfaceStyle: Dark
         NSSupportsLiveActivities: true
         CFBundleURLTypes:
