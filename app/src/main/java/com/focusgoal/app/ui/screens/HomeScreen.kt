@@ -48,7 +48,10 @@ import com.focusgoal.app.ai.MiraLines
 import com.focusgoal.app.data.FocusMode
 import com.focusgoal.app.data.FocusRepository
 import com.focusgoal.app.data.FocusSession
+import com.focusgoal.app.data.AppCategory
 import com.focusgoal.app.data.InstalledApps
+import com.focusgoal.app.data.UsageData
+import com.focusgoal.app.data.formatDuration
 import com.focusgoal.app.focus.FocusManager
 import com.focusgoal.app.focus.Permissions
 import com.focusgoal.app.ui.AppIconStack
@@ -73,7 +76,7 @@ import java.util.Calendar
 private val DURATIONS = listOf(10, 15, 25, 45, 60, 90, 120)
 
 @Composable
-fun HomeScreen(onOpenApps: () -> Unit, onOpenChat: () -> Unit, onOpenSetup: () -> Unit) {
+fun HomeScreen(onOpenApps: () -> Unit, onOpenChat: () -> Unit, onOpenSetup: () -> Unit, onOpenUsage: () -> Unit) {
     val context = LocalContext.current
     val repo = remember { FocusRepository.get(context) }
     val session by repo.session.collectAsStateWithLifecycle()
@@ -95,7 +98,7 @@ fun HomeScreen(onOpenApps: () -> Unit, onOpenChat: () -> Unit, onOpenSetup: () -
         if (current != null && current.isRunning(now)) {
             ActiveSessionContent(current, now, onOpenChat)
         } else {
-            IdleContent(onOpenApps, onOpenChat, onOpenSetup, now)
+            IdleContent(onOpenApps, onOpenChat, onOpenSetup, onOpenUsage, now)
         }
     }
 }
@@ -105,7 +108,13 @@ fun HomeScreen(onOpenApps: () -> Unit, onOpenChat: () -> Unit, onOpenSetup: () -
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun IdleContent(onOpenApps: () -> Unit, onOpenChat: () -> Unit, onOpenSetup: () -> Unit, now: Long) {
+private fun IdleContent(
+    onOpenApps: () -> Unit,
+    onOpenChat: () -> Unit,
+    onOpenSetup: () -> Unit,
+    onOpenUsage: () -> Unit,
+    now: Long,
+) {
     val context = LocalContext.current
     val repo = remember { FocusRepository.get(context) }
     val chat = remember { MiraChat.get(context) }
@@ -243,6 +252,8 @@ private fun IdleContent(onOpenApps: () -> Unit, onOpenChat: () -> Unit, onOpenSe
     )
 
     BlockedAppsCard(blocked, onOpenApps)
+
+    ScreenTimeCard(onOpenUsage)
 
     // ---- Stats ----
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -438,5 +449,54 @@ private fun RoundGlassButton(symbol: String, onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Text(symbol, style = MaterialTheme.typography.titleLarge, color = Palette.Text)
+    }
+}
+
+/** "1h 21m Screen Time" with a distracting / productive / others bar. Opens Usage Stats. */
+@Composable
+private fun ScreenTimeCard(onOpenUsage: () -> Unit) {
+    val context = LocalContext.current
+    val tick = rememberResumeTick()
+    val hasAccess = remember(tick) { UsageData.hasAccess(context) }
+    val split by produceState<Map<AppCategory, Long>?>(null, tick, hasAccess) {
+        value = if (!hasAccess) null else withContext(Dispatchers.IO) {
+            val today = UsageData.day(context, java.time.LocalDate.now())
+            AppCategory.entries.associateWith { c ->
+                today.perApp.filterKeys { UsageData.category(context, it) == c }.values.sum()
+            }
+        }
+    }
+
+    GlassCard(onClick = onOpenUsage) {
+        SectionLabel("Screen time today")
+        Spacer(Modifier.height(8.dp))
+        val data = split
+        if (!hasAccess) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("See where your time goes", style = MaterialTheme.typography.titleMedium, color = Palette.Text, modifier = Modifier.weight(1f))
+                Text("Allow", style = MaterialTheme.typography.labelLarge, color = Palette.AccentLight)
+            }
+        } else {
+            val total = data?.values?.sum() ?: 0L
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(if (data == null) "…" else formatDuration(total), style = MaterialTheme.typography.titleLarge, color = Palette.Text, modifier = Modifier.weight(1f))
+                Text("Details", style = MaterialTheme.typography.labelLarge, color = Palette.AccentLight)
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(Modifier.fillMaxWidth().height(8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (data == null || total == 0L) {
+                    Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(50)).background(Palette.Glass))
+                } else {
+                    listOf(AppCategory.DISTRACTING, AppCategory.PRODUCTIVE, AppCategory.OTHERS).forEach { c ->
+                        val ms = data[c] ?: 0L
+                        if (ms > 0) {
+                            Box(
+                                Modifier.weight(ms.toFloat()).height(8.dp).clip(RoundedCornerShape(50)).background(c.color),
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }

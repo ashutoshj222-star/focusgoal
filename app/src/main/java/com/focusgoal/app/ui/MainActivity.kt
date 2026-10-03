@@ -30,6 +30,7 @@ import com.focusgoal.app.ui.screens.ChatScreen
 import com.focusgoal.app.ui.screens.HomeScreen
 import com.focusgoal.app.ui.screens.SettingsScreen
 import com.focusgoal.app.ui.screens.SetupScreen
+import com.focusgoal.app.ui.screens.UsageScreen
 import com.focusgoal.app.ui.theme.FocusTheme
 import com.focusgoal.app.ui.theme.GlowBackground
 import com.focusgoal.app.widget.FocusWidgetProvider
@@ -72,6 +73,11 @@ private fun FocusGoalApp() {
 
 @Composable
 private fun MainTabs(tab: Tab, onTab: (Tab) -> Unit, onOpenSetup: () -> Unit) {
+    var showUsage by rememberSaveable { mutableStateOf(false) }
+    if (showUsage) {
+        UsageScreen(onBack = { showUsage = false })
+        return
+    }
     if (tab != Tab.HOME) BackHandler { onTab(Tab.HOME) }
     val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     Column(Modifier.fillMaxSize().imePadding()) {
@@ -81,6 +87,7 @@ private fun MainTabs(tab: Tab, onTab: (Tab) -> Unit, onOpenSetup: () -> Unit) {
                     onOpenApps = { onTab(Tab.APPS) },
                     onOpenChat = { onTab(Tab.MIRA) },
                     onOpenSetup = onOpenSetup,
+                    onOpenUsage = { showUsage = true },
                 )
                 Tab.APPS -> AppsScreen()
                 Tab.MIRA -> ChatScreen()

@@ -50,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.focusgoal.app.data.FocusRepository
+import com.focusgoal.app.data.UsageData
 import com.focusgoal.app.focus.Permissions
 import com.focusgoal.app.ui.character.Mira
 import com.focusgoal.app.ui.character.MiraMood
@@ -92,7 +93,8 @@ fun SetupScreen(firstRun: Boolean, onDone: () -> Unit) {
     val overlay = remember(key) { Permissions.overlayAllowed(context) }
     val admin = remember(key) { Permissions.deviceAdminActive(context) }
     val battery = remember(key) { Permissions.batteryUnrestricted(context) }
-    val grantedCount = listOf(accessibility, notifications, overlay, admin, battery).count { it }
+    val usage = remember(key) { UsageData.hasAccess(context) }
+    val grantedCount = listOf(accessibility, notifications, overlay, admin, battery, usage).count { it }
 
     val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { localTick++ }
     var name by remember { mutableStateOf(settings.userName) }
@@ -130,7 +132,7 @@ fun SetupScreen(firstRun: Boolean, onDone: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Mira(Modifier.size(150.dp), mood = if (grantedCount == 5) MiraMood.CELEBRATE else MiraMood.HAPPY)
+            Mira(Modifier.size(150.dp), mood = if (grantedCount == 6) MiraMood.CELEBRATE else MiraMood.HAPPY)
             Text(
                 if (firstRun) "Hi, I'm Mira!" else "Permissions",
                 style = MaterialTheme.typography.headlineMedium,
@@ -203,10 +205,16 @@ fun SetupScreen(firstRun: Boolean, onDone: () -> Unit) {
             granted = battery,
             onAllow = { context.launch(Permissions.batteryRequest(context)) },
         )
+        PermissionCard(
+            title = "Screen time stats",
+            description = "Shows how long you use each app, daily and weekly. Tap Allow, then tap FocusGoal and turn on \"Usage access\".",
+            granted = usage,
+            onAllow = { openUsageAccess(context) },
+        )
 
         Spacer(Modifier.height(4.dp))
         Text(
-            "$grantedCount of 5 allowed",
+            "$grantedCount of 6 allowed",
             style = MaterialTheme.typography.labelLarge,
             color = Palette.TextDim,
             modifier = Modifier.fillMaxWidth(),
