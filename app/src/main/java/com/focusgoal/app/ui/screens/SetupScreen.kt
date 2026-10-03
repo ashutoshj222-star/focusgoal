@@ -5,6 +5,8 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -56,16 +58,20 @@ import com.focusgoal.app.ui.theme.Palette
 import com.focusgoal.app.ui.theme.PillButton
 import com.focusgoal.app.ui.theme.glass
 
-private fun Context.launch(intent: Intent, fallback: Intent = Permissions.appInfo(this)) {
-    try {
-        startActivity(intent)
-    } catch (e: ActivityNotFoundException) {
+/** Opens a settings screen; some phones refuse certain screens, so never let that crash the app. */
+private fun Context.launch(intent: Intent, fallback: Intent = Permissions.appInfo(this)): Boolean {
+    for (candidate in listOf(intent, fallback, Permissions.appInfo(this))) {
         try {
-            startActivity(fallback)
-        } catch (e2: ActivityNotFoundException) {
-            startActivity(Permissions.appInfo(this))
+            startActivity(candidate)
+            return true
+        } catch (e: ActivityNotFoundException) {
+            // try the next one
+        } catch (e: SecurityException) {
+            // try the next one
         }
     }
+    Toast.makeText(this, "Couldn't open Settings. Please open it yourself.", Toast.LENGTH_LONG).show()
+    return false
 }
 
 /**
@@ -97,7 +103,14 @@ fun SetupScreen(firstRun: Boolean, onDone: () -> Unit) {
             onOpenSettings = {
                 showBlockerGuide = false
                 repo.returnAfterAccessibility = true
-                context.launch(Permissions.accessibilitySettings(context), fallback = Permissions.accessibilityList())
+                if (context.launch(Permissions.accessibilitySettings(context), fallback = Intent(Settings.ACTION_SETTINGS))) {
+                    // Stays on screen over Settings as a reminder of what to tap.
+                    Toast.makeText(
+                        context,
+                        "Tap \"Installed apps\" → \"FocusGoal app blocker\" → turn it ON → Allow",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
             },
             onOpenAppInfo = {
                 showBlockerGuide = false
@@ -294,9 +307,9 @@ private fun BlockerGuideDialog(onOpenSettings: () -> Unit, onOpenAppInfo: () -> 
         Text("Turn on the app blocker", style = MaterialTheme.typography.titleLarge, color = Palette.Text)
         Spacer(Modifier.height(14.dp))
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            GuideStep(1, "Tap \"FocusGoal app blocker\". If you don't see it, first tap \"Installed apps\" or \"Downloaded apps\".")
-            GuideStep(2, "Turn the switch ON.")
-            GuideStep(3, "Tap \"Allow\" on the popup.")
+            GuideStep(1, "In Accessibility, tap \"Installed apps\". On some phones it's called \"Downloaded apps\" or \"Installed services\". Scroll down if you don't see it.")
+            GuideStep(2, "Tap \"FocusGoal app blocker\".")
+            GuideStep(3, "Turn ON \"Use FocusGoal app blocker\", then tap \"Allow\".")
             GuideStep(4, "I'll bring you right back here ✓")
         }
         Spacer(Modifier.height(20.dp))

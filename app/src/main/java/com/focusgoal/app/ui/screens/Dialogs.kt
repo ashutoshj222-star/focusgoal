@@ -117,7 +117,7 @@ fun DeepFocusDialog(
             Spacer(Modifier.height(10.dp))
             Row(
                 Modifier.fillMaxWidth().glass(RoundedCornerShape(20.dp), fill = Palette.Danger.copy(alpha = 0.12f))
-                    .clickable { context.startActivity(Permissions.deviceAdminRequest(context)) }
+                    .clickable { runCatching { context.startActivity(Permissions.deviceAdminRequest(context)) } }
                     .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
