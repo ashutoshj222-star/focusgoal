@@ -89,7 +89,8 @@ class BlockerAccessibilityService : AccessibilityService() {
         performGlobalAction(GLOBAL_ACTION_BACK)
         if (now - lastToastAt > 3000) {
             lastToastAt = now
-            Toast.makeText(this, "Mira blocked ${hit.appName} ${hit.featureName} 🙅‍♀️", Toast.LENGTH_SHORT).show()
+            val why = if (FocusRepository.get(this).activeSession() == null) " (set to block all the time)" else ""
+            Toast.makeText(this, "Mira blocked ${hit.appName} ${hit.featureName} 🙅‍♀️$why", Toast.LENGTH_SHORT).show()
         }
     }
 

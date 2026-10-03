@@ -29,7 +29,7 @@ data class FocusSettings(
     val aiModel: String = "",
     val lockWholePhoneByDefault: Boolean = false,
     /** Shorts/Reels blocks apply only while a session runs (otherwise they're always on). */
-    val featuresOnlyDuringFocus: Boolean = false,
+    val featuresOnlyDuringFocus: Boolean = true,
     val onboardingDone: Boolean = false,
     val lastDurationMinutes: Int = 25,
 )
@@ -175,7 +175,7 @@ class FocusRepository private constructor(context: Context) {
         apiKey = prefs.getString(KEY_API_KEY, "") ?: "",
         aiModel = prefs.getString(KEY_AI_MODEL, "") ?: "",
         lockWholePhoneByDefault = prefs.getBoolean(KEY_LOCK_ALL_DEFAULT, false),
-        featuresOnlyDuringFocus = prefs.getBoolean(KEY_FEATURES_ONLY_FOCUS, false),
+        featuresOnlyDuringFocus = prefs.getBoolean(KEY_FEATURES_ONLY_FOCUS, true),
         onboardingDone = prefs.getBoolean(KEY_ONBOARDING, false),
         lastDurationMinutes = prefs.getInt(KEY_LAST_DURATION, 25),
     )
@@ -234,7 +234,7 @@ class FocusRepository private constructor(context: Context) {
     companion object {
         private const val KEY_BLOCKED = "blocked_apps"
         private const val KEY_BLOCKED_FEATURES = "blocked_features"
-        private const val KEY_FEATURES_ONLY_FOCUS = "features_only_focus"
+        private const val KEY_FEATURES_ONLY_FOCUS = "features_only_focus_v2"
         private const val KEY_RETURN_AFTER_A11Y = "return_after_a11y"
         private const val KEY_S_MODE = "session_mode"
         private const val KEY_S_START = "session_start"

@@ -87,22 +87,29 @@ fun FeatureBlocksList(deepActive: Boolean) {
                     color = Palette.TextDim,
                 )
                 Spacer(Modifier.height(10.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Only during focus sessions", style = MaterialTheme.typography.titleMedium, color = Palette.Text)
-                        Text(
-                            if (settings.featuresOnlyDuringFocus) "Blocked only while a timer runs" else "Blocked all the time",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Palette.TextDim,
-                        )
+                Text("When to block", style = MaterialTheme.typography.titleMedium, color = Palette.Text)
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth().glass(RoundedCornerShape(50)).padding(4.dp)) {
+                    listOf(true to "Only during focus", false to "All the time").forEach { (onlyFocus, label) ->
+                        val on = settings.featuresOnlyDuringFocus == onlyFocus
+                        Box(
+                            Modifier.weight(1f).clip(RoundedCornerShape(50))
+                                .background(if (on) Palette.Accent.copy(alpha = 0.6f) else Color.Transparent)
+                                .clickable(enabled = !deepActive) { repo.updateSettings { it.copy(featuresOnlyDuringFocus = onlyFocus) } }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(label, style = MaterialTheme.typography.labelLarge, color = if (on) Color.White else Palette.TextDim)
+                        }
                     }
-                    Switch(
-                        checked = settings.featuresOnlyDuringFocus,
-                        onCheckedChange = { on -> repo.updateSettings { it.copy(featuresOnlyDuringFocus = on) } },
-                        enabled = !deepActive,
-                        colors = switchColors(),
-                    )
                 }
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    if (settings.featuresOnlyDuringFocus) "Shorts & Reels unlock as soon as your timer ends or you stop it."
+                    else "Blocked every day, even without a timer running.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Palette.TextFaint,
+                )
             }
         }
         items(groups, key = { it.packageName }) { app ->
