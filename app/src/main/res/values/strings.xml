@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FocusGoal</string>
+    <string name="accessibility_label">FocusGoal app blocker</string>
+    <string name="accessibility_description">FocusGoal uses this to notice when you open an app you chose to block, and to recognise screens like YouTube Shorts or Instagram Reels if you chose to block those. It then sends you home or back. Nothing on your screen is saved or sent anywhere.</string>
+    <string name="device_admin_description">Prevents FocusGoal from being uninstalled while a Deep Focus session is running.</string>
+    <string name="widget_label">Focus timer</string>
+    <string name="widget_description">See your focus timer and start a session from the home screen.</string>
+</resources>

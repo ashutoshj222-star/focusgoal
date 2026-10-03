@@ -1,0 +1,140 @@
+# Generate the Xcode project with:  brew install xcodegen && xcodegen generate
+# Before running on your iPhone, change these to your own values:
+#   - DEVELOPMENT_TEAM (your Apple team ID)
+#   - the bundle IDs below and the App Group (also in Shared/SharedStore.swift and *.entitlements)
+name: FocusGoal
+options:
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+
+targets:
+  FocusGoal:
+    type: application
+    platform: iOS
+    scheme: {}
+    sources:
+      - FocusGoal
+      - Shared
+    info:
+      path: FocusGoal/Info.plist
+      properties:
+        CFBundleDisplayName: FocusGoal
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIRequiresFullScreen: true
+        UIUserInterfaceStyle: Dark
+        NSSupportsLiveActivities: true
+        CFBundleURLTypes:
+          - CFBundleURLSchemes: [focusgoal]
+    entitlements:
+      path: FocusGoal/FocusGoal.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.com.focusgoal.app]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.focusgoal.app
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    dependencies:
+      - target: FocusGoalMonitor
+      - target: FocusGoalShield
+      - target: FocusGoalShieldAction
+      - target: FocusGoalWidget
+
+  # Ends the session (removes the app shields) when the timer runs out, even if the app is closed.
+  FocusGoalMonitor:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Extensions/Monitor
+      - Shared
+    info:
+      path: Extensions/Monitor/Info.plist
+      properties:
+        CFBundleDisplayName: FocusGoal Monitor
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).FocusMonitor
+    entitlements:
+      path: Extensions/Monitor/Monitor.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.com.focusgoal.app]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.focusgoal.app.monitor
+
+  # The screen shown over a blocked app: FocusGoal logo, end time and "Stay focused".
+  FocusGoalShield:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Extensions/Shield
+      - Shared
+    info:
+      path: Extensions/Shield/Info.plist
+      properties:
+        CFBundleDisplayName: FocusGoal Shield
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettingsUI.shield-configuration-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).FocusShieldConfiguration
+    entitlements:
+      path: Extensions/Shield/Shield.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.com.focusgoal.app]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.focusgoal.app.shield
+
+  # What the "Stay focused" button does.
+  FocusGoalShieldAction:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Extensions/ShieldAction
+    info:
+      path: Extensions/ShieldAction/Info.plist
+      properties:
+        CFBundleDisplayName: FocusGoal Shield Action
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettings.shield-action-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).FocusShieldAction
+    entitlements:
+      path: Extensions/ShieldAction/ShieldAction.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.focusgoal.app.shieldaction
+
+  # Home-screen widget + Live Activity countdown (lock screen and Dynamic Island).
+  FocusGoalWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Extensions/Widget
+      - path: Shared/SharedStore.swift
+      - path: Shared/FocusActivityAttributes.swift
+    info:
+      path: Extensions/Widget/Info.plist
+      properties:
+        CFBundleDisplayName: FocusGoal
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Extensions/Widget/Widget.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.focusgoal.app]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.focusgoal.app.widget
